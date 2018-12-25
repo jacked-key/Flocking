@@ -2,28 +2,34 @@
 d3.select('h1').style('color', 'white');
 d3.select('h1').style('font-size', '24px');
 
-var num = 100; //number of dots that we will have
-var width = 1000; //width of screen
-var height = 1000; //height of screen
-var speedLim = 10; //speed limitation
-var vision = 9; //how far each unit can see
+var NUM = 100; //NUMber of dots that we will have
+var WIDTH = 1000; //WIDTH of screen
+var HEIGHT = 1000; //HEIGHT of screen
+var SPEEDLIM = 10; //speed limitation
+var VISION = 9; //how far each unit can see
+var INTROVERT = 1; //how introverted the boids are
+var STEERINGFACTOR = 0.4; //how well does the boid take it's own current value.
+var COHESION = 0.3;
+var ALIGNMENT = 0.3;
+var seperation = 0;  //value of seperation is only high when the boids are close
+//currently, the new vectors are 0.4 of currnet, 0.3 of cohesion and 0.3 of allignment
 
 //our 100 boids #Fixthis? use a matrix with linked list to speed up calculation.
-var data = d3.range(num).map(() => {
+var data = d3.range(NUM).map(() => {
   return {
-    cx: Math.floor(Math.random() * width),
-    cy: Math.floor(Math.random() * height),
+    cx: Math.floor(Math.random() * WIDTH),
+    cy: Math.floor(Math.random() * HEIGHT),
     r: 0.5,
     fill: "white",
-    Xvec: (Math.random()*6)-3, //speed goes from -3 to 3.
+    Xvec: (Math.random()*6)-3, //speed goes from -3 to 3 initially
     Yvec: (Math.random()*6)-3
   };
 });
 //appending svg
 d3.select("body")
     .append("svg")
-    .attr("width", width)
-    .attr("height", height);
+    .attr("WIDTH", WIDTH)
+    .attr("HEIGHT", HEIGHT);
 //Select SVG element
 var svg = d3.select("svg");
 
@@ -44,29 +50,39 @@ setInterval(() => {
     d.cx += d.Xvec;
     d.cy += d.Yvec;
     //these are edge cases, replace with modular arithmetic later to make faster
-    if (d.cx > width) {
-      d.cx -= width;
+    if (d.cx > WIDTH) {
+      d.cx -= WIDTH;
     } else if(d.cx < 0) {
-      d.cx += width;
+      d.cx += WIDTH;
     }
-    if (d.cy > height) {
-      d.cy -= height;
+    if (d.cy > HEIGHT) {
+      d.cy -= HEIGHT;
     } else if(d.cy < 0) {
-      d.cy += height;
+      d.cy += HEIGHT;
     }
   })
+  // Update the circles' positions according to the data.
+  circles.attr("cx", function(d) {return d.cx;})
+          .attr("cy", function(d) {return d.cy;})
+          .attr("r", function(d) {return d.r;})
+          .attr("fill", function(d) {return d.fill;});
 
+  var modified = []; //stores the changed data. Don't want to modify the data using modified data
   data.forEach(d => { //updating values.
     xval = [];
     yval = [];
-    //current method of vision #fixthis using matrix / other thing to make faster.
-    //This basically goes through everything which is slow as you can see. 
-    for (var i = 0; i<num; i++) {
+    //current method of VISION #fixthis using matrix / other thing to make faster.
+    //This basically goes through everything which is slow as you can see.
+    for (var i = 0; i<NUM; i++) {
       var distY = d.cy - data[i].cy;
       var distX = d.cx - data[i].cx;
-      if (((distY^2)+(distX^2)) < vision) {
-        yval.push(distY);
-        xval.push(distX);
+      var distance = (distY^2)+(distX^2);
+      if (distance < VISION) {
+        yval.push(Ydistance: distY, d.Yvec);
+        xval.push(Xdistance: distX, d.Xvec);
+        if (distance < INTROVERT) {
+
+        }
       }
     }
 
@@ -76,32 +92,28 @@ setInterval(() => {
     d.Yvec -= vec1[1];
     var magSq = ((d.Xvec^2) + (d.Yvec^2))^(1/2);
 
-    //normalize
-    if (magSq >speedLim) {
-      d.Xvec = (d.Xvec / magSq) * speedLim;
-      d.Yvec = (d.Yvec / magSq) * speedLim;
+    //normalize is there better math? #fixthis ?
+    if (magSq >SPEEDLIM) {
+      d.Xvec = (d.Xvec / magSq) * SPEEDLIM;
+      d.Yvec = (d.Yvec / magSq) * SPEEDLIM;
     }
     //movement based on vectors
 
     d.cx += d.Xvec;
     d.cy += d.Yvec;
-    if (d.cx > width) {
-      d.cx -= width;
+    if (d.cx > WIDTH) {
+      d.cx -= WIDTH;
     } else if(d.cx < 0) {
-      d.cx += width;
+      d.cx += WIDTH;
     }
-    if (d.cy > height) {
-      d.cy -= height;
+    if (d.cy > HEIGHT) {
+      d.cy -= HEIGHT;
     } else if(d.cy < 0) {
-      d.cy += height;
+      d.cy += HEIGHT;
     }
   });
 
-  // Update the circles' positions according to the data.
-  circles.attr("cx", function(d) {return d.cx;})
-          .attr("cy", function(d) {return d.cy;})
-          .attr("r", function(d) {return d.r;})
-          .attr("fill", function(d) {return d.fill;});
+
 }, 50);
 
 
