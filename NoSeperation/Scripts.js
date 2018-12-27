@@ -3,15 +3,15 @@ d3.select('h1').style('color', 'white');
 d3.select('h1').style('font-size', '24px');
 
 var NUM = 1000; //NUMber of dots that we will have
-var WIDTH = 1000; //WIDTH of screen
-var HEIGHT = 1000; //HEIGHT of screen
-var SPEEDLIM = 3; //speed limitation
+var WIDTH = 200; //WIDTH of screen
+var HEIGHT = 200; //HEIGHT of screen
+var SPEEDLIM = 9; //speed limitation
 var VISION = 400; //how far each unit can see
 var INTROVERT = 1; //how introverted the boids are
-var STEERINGFACTOR = 0.3; //how well does the boid take it's own current value.
-var COHESION = 0.2;
-var ALIGNMENT = 0.5;
-var SEPSTRENGTH = 0;  //value of seperation is only high when the boids are close
+var STEERINGFACTOR = 0.8; //how well does the boid take it's own current value.
+var COHESION = 0.1;
+var ALIGNMENT = 0.1;
+var seperation = 0;  //value of seperation is only high when the boids are close
 //currently, the new vectors are 0.4 of currnet, 0.3 of cohesion and 0.3 of allignment
 
 //our 100 boids #Fixthis? use a matrix with linked list to speed up calculation.
@@ -59,29 +59,23 @@ setInterval(() => {
           .attr("fill", function(d) {return d.fill;});
 
   var modified = []; //stores the changed data. Don't want to have redundencies
-
-
   data.forEach(d => { //updating values.
     xval = [];
     yval = [];
-    var separation = {Xvec: 0, Yvec: 0};
-    var Closest = HEIGHT;
     //current method of VISION #fixthis using matrix / other thing to make faster.
     //This basically goes through everything which is slow as you can see.
     for (var i = 0; i<NUM; i++) {
       var distY = d.cy - data[i].cy;
       var distX = d.cx - data[i].cx;
       var distance = (distY**2)+(distX**2);
-      if (distance < VISION && distance != 0) {
+      if (distance < VISION) {
         yval.push({distY: distY, Yvec: d.Yvec, cy: d.cy});
         xval.push({distX: distX, Xvec: d.Xvec, cx: d.cx});
-        //A way to push things to close together this uses the closest boid
-        if (distance < INTROVERT && distance < Closest) {
-          Closest = distance;
+        /* //A way to push things to close together away.
+        if (distance < INTROVERT) {
 
-          separation.Xvec = VISION**(1/2)/(distX+INTROVERT)/20;
-          separation.Yvec = VISION**(1/2)/(distY+INTROVERT)/20;
         }
+        */
       }
     }
 
@@ -96,21 +90,13 @@ setInterval(() => {
       summedX = (summedX / magSq) * SPEEDLIM;
       summedY = (summedY / magSq) * SPEEDLIM;
     }
-    summedX += separation.Xvec*SEPSTRENGTH;
-    summedY += separation.Yvec*SEPSTRENGTH;
-
     modified.push({Xvec: summedX, Yvec: summedY});
   });
   for (var i = 0; i < NUM; i++) {
-    data[i].Xvec += modified[i].Xvec;
-    data[i].Yvec += modified[i].Yvec;
-    var magSq = ((data[i].Xvec**2) + (data[i].Yvec**2));
-    if (magSq > SPEEDLIM) {
-      data[i].Xvec = (data[i].Xvec / magSq) * SPEEDLIM;
-      data[i].Yvec = (data[i].Yvec / magSq) * SPEEDLIM;
-    }
+    data[i].Xvec = modified[i].Xvec;
+    data[i].Yvec = modified[i].Yvec;
   }
-}, 5);
+}, 50);
 
 
 function cohesion(p1, p2, d) {
