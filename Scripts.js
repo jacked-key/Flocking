@@ -2,15 +2,16 @@
 d3.select('h1').style('color', 'white');
 d3.select('h1').style('font-size', '24px');
 
-var NUM = 1000; //NUMber of dots that we will have
-var WIDTH = 1000; //WIDTH of screen
-var HEIGHT = 1000; //HEIGHT of screen
+var NUM = 100; //NUMber of dots that we will have
+var WIDTH = 500; //WIDTH of screen
+var HEIGHT = 500; //HEIGHT of screen
 var SPEEDLIM = 3; //speed limitation
-var VISION = 400; //how far each unit can see
+var VISION = 9000; //how far each unit can see
 var INTROVERT = 1; //how introverted the boids are
-var STEERINGFACTOR = 0.3; //how well does the boid take it's own current value.
-var COHESION = 0.2;
-var ALIGNMENT = 0.5;
+var STEERINGFACTOR = 0.4; //how well does the boid take it's own current value.
+var STEERLIM = 1; //steer lim instead of steeringFactor
+var COHESION = 0.5;
+var ALIGNMENT = 0;
 var SEPSTRENGTH = 0;  //value of seperation is only high when the boids are close
 //currently, the new vectors are 0.4 of currnet, 0.3 of cohesion and 0.3 of allignment
 
@@ -61,7 +62,7 @@ setInterval(() => {
   var modified = []; //stores the changed data. Don't want to have redundencies
 
 
-  data.forEach(d => { //updating values.
+  data.forEach(d => { //using vision to calulate steering
     xval = [];
     yval = [];
     var separation = {Xvec: 0, Yvec: 0};
@@ -75,7 +76,7 @@ setInterval(() => {
       if (distance < VISION && distance != 0) {
         yval.push({distY: distY, Yvec: d.Yvec, cy: d.cy});
         xval.push({distX: distX, Xvec: d.Xvec, cx: d.cx});
-        //A way to push things to close together this uses the closest boid
+        //#fixthis A way to push things to close together this uses the closest boid
         if (distance < INTROVERT && distance < Closest) {
           Closest = distance;
 
@@ -87,8 +88,9 @@ setInterval(() => {
 
     var vec1 = cohesion(xval, yval, d);
     var vec2 = alignment(xval, yval, d);
-    var summedX = vec1[0]*COHESION + vec2[0]*ALIGNMENT + d.Xvec*STEERINGFACTOR;
-    var summedY = vec1[1]*COHESION + vec2[1]*ALIGNMENT + d.Xvec*STEERINGFACTOR;
+    //vec 3
+    var summedX = vec1[0]*COHESION + vec2[0]*ALIGNMENT;
+    var summedY = vec1[1]*COHESION + vec2[1]*ALIGNMENT;
 
     var magSq = ((summedX**2) + (summedY**2));
     //normalize -> is there better math?
@@ -102,15 +104,21 @@ setInterval(() => {
     modified.push({Xvec: summedX, Yvec: summedY});
   });
   for (var i = 0; i < NUM; i++) {
-    data[i].Xvec += modified[i].Xvec;
-    data[i].Yvec += modified[i].Yvec;
+    //#fixthis temp is occasionally NaN
+    var temp = modified[i].Xvec**2 + modified[i].Yvec**2;
+    if (temp > STEERLIM) { //temp == temp if not NaN
+      modified[i].Xvec = (modified[i].Xec / (temp**(1/2)))*STEERLIM;
+      modified[i].Yvec = (modified[i].Yec / (temp**(1/2)))*STEERLIM;
+    }
+    data[i].Xvec += modified[i].Xvec*STEERINGFACTOR;
+    data[i].Yvec += modified[i].Yvec*STEERINGFACTOR;
     var magSq = ((data[i].Xvec**2) + (data[i].Yvec**2));
     if (magSq > SPEEDLIM) {
       data[i].Xvec = (data[i].Xvec / magSq) * SPEEDLIM;
       data[i].Yvec = (data[i].Yvec / magSq) * SPEEDLIM;
     }
   }
-}, 5);
+}, 25);
 
 
 function cohesion(p1, p2, d) {
